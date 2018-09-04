@@ -1,5 +1,5 @@
-CC = clang++-5.0
-CFLAGS = -I /usr/lib/llvm-5.0/include -lclang
+CC = clang++
+CFLAGS = -lclang
 
 dumpSparrow: cimpAST
 	$(CC) $(CFLAGS) cimporter.o cimpAST.o dumpSparrow.cpp -o dumpSparrow.out

@@ -51,7 +51,7 @@ public:
 	{
 		type = _type;
 	}
-	const CXType& getType() const {
+	const CXType& getCXType() const {
 		return type;
 	}
 private:
@@ -65,6 +65,14 @@ public:
 	{
 		structName = name;
 		structType = type;
+	}
+	const std::string& getName() const
+	{
+		return structName;
+	}
+	const TypeNode* getType() const
+	{
+		return structType;
 	}
 private:
 	std::string structName;
@@ -110,22 +118,17 @@ private:
 class FieldDecl : public Object
 {
 public:
-	FieldDecl(std::string name, long value)
+	FieldDecl(std::string name, Object *type)
 	{
 		fieldDeclName = name;
-		//enumDeclValue = value;
+		this->addObject(type);
 	}
 	const std::string& getName() const
 	{
 		return fieldDeclName;
 	}
-	// const long long& getValue() const
-	// {
-	// 	return enumDeclValue;
-	// }
 private:
 	std::string fieldDeclName;
-	//long long enumDeclValue;
 };
 
 class TypedefNode : public Object
