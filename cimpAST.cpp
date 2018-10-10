@@ -47,6 +47,8 @@ TypeNode* parseType(CXType type)
 	case CXType_IncompleteArray:
 	 	node->addObject(parseType(clang_getArrayElementType(type)));
 		break;
+	default:
+		break;
 	}
 
 	return node;
@@ -185,6 +187,10 @@ CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClientData 
 		break;
 
 	case CXCursor_MacroExpansion:
+		break;
+
+	/* Parse included files */
+	case CXCursor_InclusionDirective:
 		break;
 
 	default:

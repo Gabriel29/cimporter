@@ -21,9 +21,8 @@ std::string getStructName(CXType type)
 
 void dumpFile(File* f)
 {
-	std::cout << "File: " << f->getFileName() << std::endl;
-	std::cout << "------------------" << std::endl;
-
+	// std::cout << "File: " << f->getFileName() << std::endl;
+	// std::cout << "------------------" << std::endl;
 	for(std::vector<Object*>::iterator it = f->getChildren().begin(); it != f->getChildren().end(); ++it)
 	{
 
@@ -107,8 +106,8 @@ void dumpNodes(Object *obj)
 {
 	if(File* f = dynamic_cast<File*>(obj))
 	{
-		std::cout << "File: " << f->getFileName() << std::endl;
-		std::cout << "------------------" << std::endl;
+		// std::cout << "File: " << f->getFileName() << std::endl;
+		// std::cout << "------------------" << std::endl;
 		dumpChildrenNodes(obj);
 	}
 	
