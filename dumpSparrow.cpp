@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <map>
 
 #include "cimpAST.hpp"
@@ -94,6 +95,71 @@ void dumpType(TypeNode* node)
 
 }
 
+void dumpType(TypeNode* node, std::ostringstream& os)
+{
+	switch(node->getCXType().kind)
+	{
+	case CXType_Int:
+	case CXType_UInt:
+		os << "Int";
+		break;
+
+	case CXType_Long:
+	case CXType_LongLong:
+	case CXType_ULong: 
+	case CXType_ULongLong:
+		os << "Long";
+		break;
+
+	case CXType_Char_S:
+		os << "Char";
+		break;
+
+	case CXType_Double:
+	case CXType_LongDouble:
+		os << "Double";
+		break;
+
+	case CXType_Pointer:
+		os << "Ptr(";
+		dumpNodes(node->getChildren()[0]);
+		os << ")";
+		break;
+
+	case CXType_Void:
+		// This type is not present in Sparrow
+		break;
+
+	case CXType_ConstantArray:
+		os << "StaticArray(";
+		dumpNodes(node->getChildren()[0]);
+		os << ", " << clang_getArraySize(node->getCXType());
+		os << ")";
+		break;
+
+	case CXType_IncompleteArray:
+		os << "Ptr(";
+		dumpNodes(node->getChildren()[0]);
+		os << ")";
+		break;
+
+	case CXType_Typedef:
+		break;
+
+	case CXType_Elaborated:
+	{
+		std::string name = getStructName(node->getCXType());
+		if(name.empty())
+			os << anonymousType;
+		else os << name;
+		break;
+	}
+	default:
+		break;
+	}
+
+}
+
 void dumpChildrenNodes(Object *obj)
 {
 	for(std::vector<Object*>::size_type i = 0; i != obj->getChildren().size(); i++)
@@ -125,28 +191,45 @@ void dumpNodes(Object *obj)
 	
 	else if(TypedefNode *t = dynamic_cast<TypedefNode*>(obj))
 	{
+		//std::ostringstream typedefStream;
+	
 		std::cout << "using " << t->getName() << " = ";
 		dumpChildrenNodes(obj);
 		std::cout << std::endl;
+
+		//std::cout << typedefStream.std();
 	}
 	
 	else if(FunctionDecl* f = dynamic_cast<FunctionDecl*>(obj))
 	{
-		std::cout << "native[\"" << f->getName() << "\"]" << std::endl;
-		std::cout << "fun " << f->getName();
+ 		std::ostringstream funcStream;
+ 		std::ostringstream typeStream;
+		TypeNode* retType;
+
+		/* create function prototype */
+		funcStream << "native[\"" << f->getName() << "\"]" << std::endl;
+		funcStream << "fun " << f->getName();
+
+		/* parse function parameters */
 		for(std::vector<Object*>::size_type i = 1; i != obj->getChildren().size(); i++)
 		{
-			if(i == 1) std::cout <<" (";
-			if(i > 2) std::cout << ", ";
+			if(i == 1) funcStream <<" (";
+			if(i > 2) funcStream << ", ";
 			dumpNodes(obj->getChildren()[i]);
-			if(i+1 == obj->getChildren().size()) std::cout << ")";
+			if(i+1 == obj->getChildren().size()) funcStream << ")";
 		}
 
-		// dump return value
-		TypeNode* retType = static_cast<TypeNode*>(f->getChildren()[0]);
-		std::cout << " : ";
- 		dumpType(retType);
-		std::cout << std::endl;
+		/* get return type node */
+		retType = static_cast<TypeNode*>(f->getChildren()[0]);
+		dumpType(retType, typeStream);
+
+		/* copy retType into funcStream */
+		if(!typeStream.str().empty())
+			funcStream << " : " << typeStream.str();
+		funcStream << std::endl;
+
+		/* print function */
+		std::cout << funcStream.str();
 	}
 	
 	else if(FunctionDeclParam* p = dynamic_cast<FunctionDeclParam*>(obj))

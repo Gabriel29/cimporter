@@ -2,8 +2,8 @@
 void voidFunction();
 void voidFunction2(void);
 
-int func1();
-int func2(int a);
+int func0();
+int func1(int a);
 int func2(int a, char b);
 
 int func4(int *a);

@@ -6,6 +6,45 @@
 /* C parser library */
 #include <clang-c/Index.h>
 
+/*
+ 
+The following classes describe how every node is represented in
+AST that will afterwards be used in generating Sparrow code.
+
+Object - basic object that all AST Nodes inherit
+
+File
+	[]
+
+TypeNode
+	CXType
+	children [TypeNode]
+
+FunctionDecl
+	name
+	children [retType, arg1, arg2, ...]
+
+FunctionDeclParam
+	[]
+
+EnumNode
+	enumName
+	children [EnumDeclNode, EnumDeclNode, ...]
+
+EnumDeclNode
+	enumDeclName
+	enumDeclValue
+
+StructNode
+	
+
+FieldDecl
+	[]
+
+TypedefNode
+	[]
+*/
+
 namespace cimporter
 {
 
@@ -42,6 +81,16 @@ public:
 	{
 		return fileName;
 	}
+};
+
+class PrepFile : public Object
+{
+private:
+
+
+public:
+
+
 };
 
 class TypeNode : public Object

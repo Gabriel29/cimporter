@@ -94,7 +94,7 @@ StructNode* parseStructDecl(const CXCursor &cursor)
 		name = currentFile + std::to_string(currentVal);
 		currentVal++;
 	}
-	
+
 	TypeNode* type = new TypeNode(clang_getCursorType(cursor));
 	StructNode* s = new StructNode(name, type);
 	clang_visitChildren(cursor, cursorVisitor, s);
