@@ -45,33 +45,323 @@ TypedefNode
 	[]
 */
 
-namespace cimporter
+namespace cimp
 {
 
-class Object
+CXChildVisitResult cursorVisitorPrep(CXCursor cursor, CXCursor parent, CXClientData clientData);
+CXChildVisitResult cursorVisitorDecl(CXCursor cursor, CXCursor parent, CXClientData clientData);
+CXChildVisitResult cursorVisitorEnums(CXCursor cursor, CXCursor parent, CXClientData clientData);
+CXChildVisitResult cursorVisitorStruct(CXCursor cursor, CXCursor parent, CXClientData clientData);
+CXChildVisitResult cursorVisitorFunc(CXCursor cursor, CXCursor parent, CXClientData clientData);
+
+enum cimp_Type
 {
-protected:
-	std::vector<Object*> children;
+	cimp_Bool = 0,
+	cimp_Int, 
+	cimp_Long,
+	cimp_Char,
+	cimp_Void,
+	cimp_Float,
+	cimp_Double,
+	cimp_Pointer,
+	cimp_CtArray,
+	cimp_IncArray,
+	cimp_Other,
+};
+
+enum cimp_nodeType
+{
+	enumType = 0,
+	unionType,
+	typedefType,	
+	structType,
+	funType,
+};
+
+class Type
+{
+private:
+	Type* child;
+	//CXType cx_type;
+	cimp_Type type;
+
 public:
-	std::vector<Object*> getChildren()
+	Type(cimp_Type _type)
 	{
-		return children;
+		type = _type;
+		child = NULL;
 	}
 
-	virtual void addObject(Object *obj)
+	Type(cimp_Type _type, Type* _child)
 	{
-		children.push_back(obj);
+		type = _type;
+		child = _child;
+	}
+	// Type(CXType _cx_type, cimp_Type _type)
+	// {
+	// 	cx_type = _cx_type;
+	// 	type = _type;
+	// 	child = NULL;
+	// }
+
+	// Type(CXType _cx_type, cimp_Type _type, Type* _child)
+	// {
+	// 	cx_type = _cx_type;
+	// 	type = _type;
+	// 	child = _child;
+	// }
+	// const CXType& getCXType() const {
+	// 	return cx_type;
+	// }
+
+	const cimp_Type& getType() const {
+		return type;
+	}
+
+	const Type* getChild() const {
+		return child;
+	}
+	// TODO - Ptr, Array
+};
+
+class structField
+{
+
+private:
+	std::string declName;
+	Type* type;
+
+public:
+	structField(std::string name, Type* _type)
+	{
+		declName = name;
+		type = _type;
+	}
+	const std::string& getName() const
+	{
+		return declName;
+	}
+	const Type* getType() const
+	{
+		return type;
+	}
+};
+
+class Struct
+{
+
+private:
+	std::string structName;
+	CXType structType;
+	std::vector<structField*> fieldList;
+
+public:
+	Struct(std::string name, CXType type)
+	{
+		structName = name;
+		structType = type;
+	}
+	const std::string& getName() const
+	{
+		return structName;
+	}
+	const CXType getType() const
+	{
+		return structType;
+	}
+	const std::vector<structField*>& getFieldList() const
+	{
+		return fieldList;
+	}
+	void addToList(structField* node)
+	{
+		fieldList.push_back(node);
 	}
 
 };
 
-class File : public Object
+class EnumDecl
+{
+
+private:
+	std::string enumDeclName;
+	long enumDeclValue;
+
+public:
+	EnumDecl(std::string name, long value)
+	{
+		enumDeclName = name;
+		enumDeclValue = value;
+	}
+	const std::string& getName() const
+	{
+		return enumDeclName;
+	}
+	const long& getValue() const
+	{
+		return enumDeclValue;
+	}
+};
+
+class Enum
+{
+
+private:
+	std::string enumName;
+	std::vector<EnumDecl*> enumList;
+
+public:
+	Enum(std::string name)
+	{
+		enumName = name;
+	}
+	const std::string& getName() const
+	{
+		return enumName;
+	}
+	const std::vector<EnumDecl*> getEnumList() const
+	{
+		return enumList;
+	}
+	void addToList(EnumDecl* node)
+	{
+		enumList.push_back(node);
+	}
+};
+
+class FunParam
+{
+
+private:
+	FunParam() { }
+	std::string paramName;
+	Type *type;
+
+public:
+	FunParam(std::string name, Type* _type)
+	{
+		paramName = name;
+		type = _type;
+	}
+	const std::string& getName() const {
+		return paramName;
+	}
+	const Type* getType() const {
+		return type;
+	}
+};
+
+class Fun
+{
+
+private:
+	Fun() { }
+	std::string funcName;
+	Type* retType;
+	std::vector<FunParam*> paramList;
+
+public:
+	Fun(std::string name, Type* _retType)
+	{
+		funcName = name;
+		retType = _retType;
+	}
+	const std::string& getName() const {
+		return funcName;
+	}
+	const std::vector<FunParam*> getParamList() const {
+		return paramList;
+	}
+	const Type* getRetType() const {
+		return retType;
+	}
+
+	void addToList(FunParam* node)
+	{
+		paramList.push_back(node);
+	}
+};
+
+class Typedef
+{
+
+private:
+	std::string name;
+	Type *type;
+	Typedef() { }
+
+public:
+	Typedef(std::string typeName, Type* _type)
+	{
+		name = typeName;
+		type = _type;
+	}
+	const std::string& getName() const {
+		return name;
+	}
+	const Type* getType() const {
+		return type;
+	}
+};
+
+class Decl
+{
+
+private:
+	void *node;
+	enum cimp_nodeType nodeType;
+	Decl() { }
+
+public:
+	Decl(Enum* e)
+	{
+		node = (void*)e;
+		nodeType = enumType;
+	}
+	Decl(Typedef* t)
+	{
+		node = (void*)t;
+		nodeType = typedefType;
+	}
+	Decl(Struct* s)
+	{
+		node = (void*)s;
+		nodeType = structType;
+	}
+	Decl(Fun* f)
+	{
+		node = (void*)f;
+		nodeType = funType;
+	}
+
+	cimp_nodeType getNodeType() const
+	{
+		return nodeType;
+	}
+
+	void* getNode() const
+	{
+		return node;
+	}
+};
+
+class Prep
+{
+private:
+
+public:
+};
+
+class File
 {
 private:
 	CXCursor cursor;
 	CXIndex index;
 	CXTranslationUnit tu;
 	std::string fileName;
+	std::vector<Decl*> declList;
+	std::vector<Prep*> macroList;
+	File() { }
 	
 public:
 	File(std::string file);
@@ -81,153 +371,21 @@ public:
 	{
 		return fileName;
 	}
-};
-
-class PrepFile : public Object
-{
-private:
-
-
-public:
-
-
-};
-
-class TypeNode : public Object
-{
-public:
-	TypeNode(CXType _type)
+	const CXTranslationUnit& getTranslationUnit() const
 	{
-		type = _type;
+		return tu;
 	}
-	const CXType& getCXType() const {
-		return type;
-	}
-private:
-	CXType type;
-};
 
-class StructNode : public Object
-{
-public:
-	StructNode(std::string name, TypeNode* type)
+	const std::vector<Decl*>& getDeclList() const
 	{
-		structName = name;
-		structType = type;
+		return declList;
 	}
-	const std::string& getName() const
-	{
-		return structName;
+	void addToList(Decl* decl) {
+		declList.push_back(decl);
 	}
-	const TypeNode* getType() const
-	{
-		return structType;
+	void addToMacroList(Prep* node) {
+		macroList.push_back(node);
 	}
-private:
-	std::string structName;
-	TypeNode *structType;	
-};
-
-class EnumNode : public Object
-{
-public:
-	EnumNode(std::string name)
-	{
-		enumName = name;
-	}
-	const std::string& getName() const
-	{
-		return enumName;
-	}
-private:
-	std::string enumName;
-};
-
-class EnumDeclNode : public Object
-{
-public:
-	EnumDeclNode(std::string name, long value)
-	{
-		enumDeclName = name;
-		enumDeclValue = value;
-	}
-	const std::string& getName() const
-	{
-		return enumDeclName;
-	}
-	const long long& getValue() const
-	{
-		return enumDeclValue;
-	}
-private:
-	std::string enumDeclName;
-	long long enumDeclValue;
-};
-
-class FieldDecl : public Object
-{
-public:
-	FieldDecl(std::string name, Object *type)
-	{
-		fieldDeclName = name;
-		this->addObject(type);
-	}
-	const std::string& getName() const
-	{
-		return fieldDeclName;
-	}
-private:
-	std::string fieldDeclName;
-};
-
-class TypedefNode : public Object
-{
-public:
-	TypedefNode(std::string typeName, Object* tNode)
-	{
-		name = typeName;
-		this->addObject(tNode);
-	}
-	const std::string& getName() const {
-		return name;
-	}
-private:
-	std::string name;
-
-};
-
-/* children = [ return-type, arg0, arg1, ... ] */
-class FunctionDecl : public Object
-{
-public:
-	FunctionDecl(std::string name, Object* retType)
-	{
-		funcName = name;
-		this->addObject(retType);
-	}
-	const std::string& getName() const {
-		return funcName;
-	}
-private:
-	std::string funcName;
-};
-
-class FunctionDeclParam : public Object
-{
-public:
-	FunctionDeclParam(std::string name, Object* type)
-	{
-		paramName = name;
-		this->addObject(type);
-	}
-	const std::string& getName() const {
-		return paramName;
-	}
-	const Object* getType() const {
-		return this->children[0];
-	}
-private:
-	std::string paramName;
 };
 
 } /* namespace cimporter */

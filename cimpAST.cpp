@@ -1,92 +1,94 @@
 #include <iostream>
 #include <string>
 #include <vector>
+
 #include "cimpAST.hpp"
+#include "utils.h"
 
 #include <stdio.h>
 
 
 /* cimporter namespace */
-namespace cimporter 
+namespace cimp 
 {
 
 std::string lastAnonymousName;
 std::string currentFile;
 unsigned int currentVal;
 
-std::string removeFileExtension(const std::string& file) {
-    size_t dot = file.find_last_of(".");
-    if (dot == std::string::npos) 
-    	return file;
-    return file.substr(0, dot); 
-}
-
-CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClientData clientData);
-
-std::string getCursorName(CXCursor cursor)
+Type* parseType(CXType cx_type)
 {
-	CXString cursorSpelling = clang_getCursorSpelling(cursor);
-	std::string cursorName(clang_getCString(cursorSpelling));
-	clang_disposeString(cursorSpelling);
-
-	return cursorName;
-}
-
-TypeNode* parseType(CXType type)
-{
-	TypeNode *node = new TypeNode(type);
+	Type *type, *child;
 	
-	switch(type.kind)
+	switch(cx_type.kind)
 	{
+	case CXType_Bool:
+		type = new Type(cimp_Bool);
+		break;
+
+	case CXType_Int:
+		type = new Type(cimp_Int);
+		break;
+
+	case CXType_Long:
+	case CXType_LongLong:
+		type = new Type(cimp_Long);
+		break;
+
+	case CXType_Float:
+		type = new Type(cimp_Float);
+		break;
+
+	case CXType_Double:
+		type = new Type(cimp_Double);
+		break;
+
+	case CXType_Char_S:
+		type = new Type(cimp_Char);
+		break;
+
 	case CXType_Pointer:
-		node->addObject(parseType(clang_getPointeeType(type)));
+		child = parseType(clang_getPointeeType(cx_type));
+		type = new Type(cimp_Pointer, child);
 		break;
+
 	case CXType_ConstantArray:
-	 	node->addObject(parseType(clang_getArrayElementType(type)));
+		child = parseType(clang_getArrayElementType(cx_type));
+		type = new Type(cimp_CtArray, child);
 		break;
+
 	case CXType_IncompleteArray:
-	 	node->addObject(parseType(clang_getArrayElementType(type)));
+		child = parseType(clang_getArrayElementType(cx_type));
+		type = new Type(cimp_IncArray, child);
 		break;
+
 	default:
 		break;
 	}
 
-	return node;
+	return type;
 }
 
-TypedefNode* parseTypedef(CXCursor cursor)
+Typedef* parseTypedef(CXCursor cursor)
 {
 	std::string name = getCursorName(cursor);
-	CXType type = clang_getTypedefDeclUnderlyingType(cursor);
-	TypeNode *Type = parseType(type);
-	TypedefNode *Typedef = new TypedefNode(name, Type);
+	CXType cx_type = clang_getTypedefDeclUnderlyingType(cursor);
+	Type *type = parseType(cx_type);
+	Typedef *t = new Typedef(name, type);
 
-	return Typedef;
+	return t;
 }
 
-EnumNode* parseEnum(CXCursor cursor)
-{
-	std::string name = getCursorName(cursor);
-	if(name.empty()) {
-		lastAnonymousName = currentFile + std::to_string(currentVal);
-		name = currentFile + std::to_string(currentVal);
-		currentVal++;
-	}
-	EnumNode *e = new EnumNode(name);
-	clang_visitChildren(cursor, cursorVisitor, e);
-
-	return e;
-}
-
-EnumDeclNode* parseEnumDecl(CXCursor cursor)
+EnumDecl* parseEnumDecl(const CXCursor& cursor)
 {
 	std::string enumName = getCursorName(cursor);
 	long enumValue = clang_getEnumConstantDeclValue(cursor);
-	EnumDeclNode* e = new EnumDeclNode(enumName, enumValue);
+	EnumDecl* e = new EnumDecl(enumName, enumValue);
+
 	return e;
 }
 
-StructNode* parseStructDecl(const CXCursor &cursor)
+Enum* parseEnum(const CXCursor& cursor)
 {
 	std::string name = getCursorName(cursor);
 	if(name.empty()) {
@@ -94,49 +96,64 @@ StructNode* parseStructDecl(const CXCursor &cursor)
 		name = currentFile + std::to_string(currentVal);
 		currentVal++;
 	}
+	Enum *e = new Enum(name);
+	clang_visitChildren(cursor, cursorVisitorEnums, e);
 
-	TypeNode* type = new TypeNode(clang_getCursorType(cursor));
-	StructNode* s = new StructNode(name, type);
-	clang_visitChildren(cursor, cursorVisitor, s);
+	return e;
+}
+
+Struct* parseStruct(const CXCursor& cursor)
+{
+	std::string name = getCursorName(cursor);
+
+	if(name.empty()) {
+		lastAnonymousName = currentFile + std::to_string(currentVal);
+		name = currentFile + std::to_string(currentVal);
+		currentVal++;
+	}
+
+	CXType type = clang_getCursorType(cursor);
+	Struct* s = new Struct(name, type);
+	clang_visitChildren(cursor, cursorVisitorStruct, s);
 
 	return s;
 }
 
-FieldDecl* parseFieldDecl(CXCursor cursor)
+structField* parseStructField(CXCursor cursor)
 {
 	std::string name = getCursorName(cursor);
-	TypeNode* type = parseType(clang_getCursorType(cursor));
+	Type* type = parseType(clang_getCursorType(cursor));
 	
-	return new FieldDecl(name, type);
+	return new structField(name, type);
 }
 
-FunctionDecl* parseFunctionDecl(CXCursor cursor)
+Fun* parseFun(CXCursor cursor)
 {
-	FunctionDecl* func = NULL;
+	Fun* func = NULL;
 	std::string name = getCursorName(cursor);
-	TypeNode* retType = parseType(clang_getResultType(clang_getCursorType(cursor)));
+	Type* retType = parseType(clang_getResultType(clang_getCursorType(cursor)));
 
 	/* Create function node */
-	func = new FunctionDecl(name, retType);
+	func = new Fun(name, retType);
 
 	/* Parse args if they are available */
 	if(clang_Cursor_getNumArguments(cursor) > 0)
 	{
-		clang_visitChildren(cursor, cursorVisitor, func);
+		clang_visitChildren(cursor, cursorVisitorFunc, func);
 	}
 
 	return func;
 }
 
-FunctionDeclParam* parseParmDecl(CXCursor cursor)
+FunParam* parseFunParam(CXCursor cursor)
 {
-	FunctionDeclParam* param = NULL;
-	param = new FunctionDeclParam("nume", parseType(clang_getCursorType(cursor)));
+	FunParam* param = NULL;
+	param = new FunParam("nume", parseType(clang_getCursorType(cursor)));
 	
 	return param;
 }
 
-CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClientData clientData)
+CXChildVisitResult cursorVisitorFunc(CXCursor cursor, CXCursor parent, CXClientData clientData)
 {
 	CXSourceLocation location = clang_getCursorLocation(cursor);
 	if( clang_Location_isFromMainFile( location ) == 0 )
@@ -144,54 +161,188 @@ CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClientData 
 		return CXChildVisit_Continue;
 	}
 
-	Object* obj = static_cast<Object*>(clientData);
+	Fun* f = reinterpret_cast<Fun*>(clientData);
+	CXCursorKind cursorKind = clang_getCursorKind(cursor);
+
+	if (cursorKind == CXCursor_ParmDecl) {
+		f->addToList(parseFunParam(cursor));
+	}
+
+	return CXChildVisit_Continue;
+}
+
+CXChildVisitResult cursorVisitorStruct(CXCursor cursor, CXCursor parent, CXClientData clientData)
+{
+	CXSourceLocation location = clang_getCursorLocation(cursor);
+	if( clang_Location_isFromMainFile( location ) == 0 )
+	{
+		return CXChildVisit_Continue;
+	}
+
+	Struct* s = reinterpret_cast<Struct*>(clientData);
+	CXCursorKind cursorKind = clang_getCursorKind(cursor);
+
+	if (cursorKind ==  CXCursor_FieldDecl) {
+		s->addToList(parseStructField(cursor));
+	}
+
+	return CXChildVisit_Continue;
+}
+
+CXChildVisitResult cursorVisitorEnums(CXCursor cursor, CXCursor parent, CXClientData clientData)
+{
+	CXSourceLocation location = clang_getCursorLocation(cursor);
+	if( clang_Location_isFromMainFile( location ) == 0 )
+	{
+		return CXChildVisit_Continue;
+	}
+
+	Enum* e = reinterpret_cast<Enum*>(clientData);
+	CXCursorKind cursorKind = clang_getCursorKind(cursor);
+
+	if (cursorKind ==  CXCursor_EnumConstantDecl) {
+		e->addToList(parseEnumDecl(cursor));
+	}
+
+	return CXChildVisit_Continue;
+}
+
+CXChildVisitResult cursorVisitorDecl(CXCursor cursor, CXCursor parent, CXClientData clientData)
+{
+	CXSourceLocation location = clang_getCursorLocation(cursor);
+	if( clang_Location_isFromMainFile( location ) == 0 )
+	{
+		return CXChildVisit_Continue;
+	}
+
 	CXCursorKind cursorKind = clang_getCursorKind(cursor);
 
 	switch(cursorKind)
 	{
 	case CXCursor_TypedefDecl:
-		obj->addObject(parseTypedef(cursor));
+	{
+		//obj->addObject(parseTypedef(cursor));
+		File* f = reinterpret_cast<File*>(clientData);
+		f->addToList(new Decl(parseTypedef(cursor)));
 		break;
+	}
 
-	case CXCursor_EnumDecl:
-		obj->addObject(parseEnum(cursor));
+	case CXCursor_EnumDecl: 
+	{
+		File* f = reinterpret_cast<File*>(clientData);
+		f->addToList(new Decl(parseEnum(cursor)));
 		break;
+	}
 
 	case CXCursor_StructDecl:
-		obj->addObject(parseStructDecl(cursor));
+	{
+		File* f = reinterpret_cast<File*>(clientData);
+		f->addToList(new Decl(parseStruct(cursor)));
 		break;
+	}
 
-	case CXCursor_FieldDecl:
-		obj->addObject(parseFieldDecl(cursor));
-	 	break;
+	// case CXCursor_FieldDecl:
+	// {
+	// 	Struct* s = reinterpret_cast<Struct*>(clientData);
+	// 	s->addToList(parseStructField(cursor));
+	//  	break;
+	// }
 
 	case CXCursor_UnionDecl:
+	{
+		File* f = reinterpret_cast<File*>(clientData);
+		//f->addToList(new Decl(parseUnion(cursor)));
 		break;
+	}
 
 	case CXCursor_FunctionDecl:
-		obj->addObject(parseFunctionDecl(cursor));
+	{
+		// obj->addObject(parseFunctionDecl(cursor));
+		File* f = reinterpret_cast<File*>(clientData);
+		f->addToList(new Decl(parseFun(cursor)));
 		break; 
+	}
 
-	case CXCursor_VarDecl:
-		break;
+	//case CXCursor_VarDecl:
+	//	break;
 
-	case CXCursor_ParmDecl:
-		obj->addObject(parseParmDecl(cursor));
-		break;
+	// case CXCursor_ParmDecl:
+	// 	// obj->addObject(parseParmDecl(cursor));
+	// 	break;
 
-	case CXCursor_EnumConstantDecl: 
-		obj->addObject(parseEnumDecl(cursor));
+	// case CXCursor_MacroDefinition:
+	// 	break;
+
+	// case CXCursor_MacroExpansion:
+	// 	break;
+
+	// /* Parse included files */
+	// case CXCursor_InclusionDirective:
+	// 	break;
+
+	default:
 		break;
+	}
+
+	return CXChildVisit_Continue;
+}
+
+Prep* parseMacroDefiniton(CXCursor cursor, File* file)
+{
+	
+	CXTranslationUnit TU = (CXTranslationUnit)file->getTranslationUnit();
+	CXSourceRange range = clang_getCursorExtent(cursor);
+
+	unsigned  num_tokens;
+	CXToken*  tokens;
+	CXCursor* cursors = 0;
+	clang_tokenize(TU, range, &tokens, &num_tokens);
+
+	cursors = (CXCursor *)malloc(num_tokens * sizeof(CXCursor));
+	clang_annotateTokens(TU, tokens, num_tokens, cursors);
+
+	for (unsigned i = 0; i != num_tokens; ++i) {
+		CXString str = clang_getTokenSpelling(TU, tokens[i]);
+		printf("%s\n", clang_getCString(str));
+		clang_disposeString(str);
+	}
+
+	free(cursors);
+	clang_disposeTokens(TU, tokens, num_tokens);
+
+	return new Prep();
+}
+
+CXChildVisitResult cursorVisitorPrep(CXCursor cursor, CXCursor parent, CXClientData clientData)
+{
+	CXSourceLocation location = clang_getCursorLocation(cursor);
+	if( clang_Location_isFromMainFile( location ) == 0 )
+	{
+		return CXChildVisit_Continue;
+	}
+
+	CXCursorKind cursorKind = clang_getCursorKind(cursor);
+
+	switch(cursorKind)
+	{
 
 	case CXCursor_MacroDefinition:
+	{
+		File* f = reinterpret_cast<File*>(clientData);
+		f->addToMacroList(parseMacroDefiniton(cursor, (File*)clientData));
 		break;
+	}
 
 	case CXCursor_MacroExpansion:
+	{
 		break;
+	}
 
 	/* Parse included files */
 	case CXCursor_InclusionDirective:
+	{
 		break;
+	}
 
 	default:
 		break;
@@ -227,7 +378,11 @@ File::~File()
 
 void File::parseFile()
 {
-	clang_visitChildren(cursor, cursorVisitor, this);
+	/* Parse prep */
+	clang_visitChildren(cursor, cursorVisitorPrep, this);
+
+	/* Parse decl */
+	clang_visitChildren(cursor, cursorVisitorDecl, this);
 }
 
 } /* cimporter namespace */

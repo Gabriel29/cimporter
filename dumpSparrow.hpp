@@ -1,20 +1,17 @@
 #ifndef __DUMP_SPARROW__
 #define __DUMP_SPARROW__
 
-namespace cimporter
+#include <sstream>
+#include "cimpAST.hpp"
+
+namespace cimp
 {
 
 void dumpFile(File* f);
-void dumpNodes(Object *obj);
-void dumpFunction(Object *obj);
-
-/*
-class dumpSparrow
-{
-public:
-private:
-};
-*/
+void dumpEnum(Enum *e, std::stringstream& ss);
+void dumpTypedef(Typedef* t, std::stringstream& ss);
+void dumpStruct(Struct* s, std::stringstream& ss);
+void dumpFun(Fun *f, std::stringstream& ss);
 
 };
 

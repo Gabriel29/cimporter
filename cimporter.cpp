@@ -11,11 +11,11 @@ int main(int argc, char** argv)
 	}
 
 	std::string fileName(argv[1]);
-	cimporter::File* file = new cimporter::File(fileName);
+	cimp::File* file = new cimp::File(fileName);
 	file->parseFile();
 
 	/* dump Sparrow code to screen */
-	cimporter::dumpNodes(file);
+	cimp::dumpFile(file);
 
 	return 0;
 }
