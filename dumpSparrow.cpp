@@ -25,6 +25,12 @@ void dumpFile(File* f)
 	std::cout << "File: " << f->getFileName() << std::endl;
 	std::cout << "------------------------" << std::endl << std::endl;
 	
+	/* Print all macros from File */
+	for(auto const& value: f->getMacroList())
+	{
+		std::cout << "using " << value->getName() << " = " << value->getExpansion() << std::endl;
+	}
+
 	/* Print all declarations from File */
 	for(auto const& value: f->getDeclList())
 	{
@@ -96,6 +102,7 @@ void dumpType(const Type* t, std::stringstream& ss)
 
 	case cimp_IncArray:
 		ss << "Ptr(";
+
 		dumpType(t->getChild(), ss);
 		ss << ")";
 		break;

@@ -62,6 +62,10 @@ Type* parseType(CXType cx_type)
 		type = new Type(cimp_IncArray, child);
 		break;
 
+	case CXType_Void:
+		type = new Type(cimp_Void);
+		break;
+
 	default:
 		break;
 	}
@@ -287,12 +291,34 @@ CXChildVisitResult cursorVisitorDecl(CXCursor cursor, CXCursor parent, CXClientD
 	return CXChildVisit_Continue;
 }
 
-Prep* parseMacroDefiniton(CXCursor cursor, File* file)
+std::string getMacroType(std::string type)
+{
+	std::string sprType;
+
+	if(type == "int")
+		sprType = "Int";
+	else if(type == "long")
+		sprType = "Int";
+	else if(type == "unsigned")
+		sprType = "Int";
+	else if(type == "float")
+		sprType = "Double";
+	else if(type == "double")
+		sprType = "Double";
+	else if(type == "char")
+		sprType = "Char";
+	else sprType = type;
+
+	return sprType;
+}
+
+Macro* parseMacroDefiniton(CXCursor cursor, File* file)
 {
 	
 	CXTranslationUnit TU = (CXTranslationUnit)file->getTranslationUnit();
 	CXSourceRange range = clang_getCursorExtent(cursor);
 
+	std::string name, macro;
 	unsigned  num_tokens;
 	CXToken*  tokens;
 	CXCursor* cursors = 0;
@@ -303,14 +329,19 @@ Prep* parseMacroDefiniton(CXCursor cursor, File* file)
 
 	for (unsigned i = 0; i != num_tokens; ++i) {
 		CXString str = clang_getTokenSpelling(TU, tokens[i]);
-		printf("%s\n", clang_getCString(str));
+		
+		if(i == 0)
+			name = clang_getCString(str);
+		else if(i == 1) 
+			macro = getMacroType(clang_getCString(str));
+
 		clang_disposeString(str);
 	}
 
 	free(cursors);
 	clang_disposeTokens(TU, tokens, num_tokens);
 
-	return new Prep();
+	return new Macro(name, macro);
 }
 
 CXChildVisitResult cursorVisitorPrep(CXCursor cursor, CXCursor parent, CXClientData clientData)

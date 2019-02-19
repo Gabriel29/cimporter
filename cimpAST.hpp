@@ -5,6 +5,7 @@
 
 /* C parser library */
 #include <clang-c/Index.h>
+#include "cimpMacroParser.hpp"
 
 /*
  
@@ -114,7 +115,7 @@ public:
 	// 	return cx_type;
 	// }
 
-	const cimp_Type& getType() const {
+	const cimp_Type getType() const {
 		return type;
 	}
 
@@ -345,13 +346,6 @@ public:
 	}
 };
 
-class Prep
-{
-private:
-
-public:
-};
-
 class File
 {
 private:
@@ -360,7 +354,7 @@ private:
 	CXTranslationUnit tu;
 	std::string fileName;
 	std::vector<Decl*> declList;
-	std::vector<Prep*> macroList;
+	std::vector<Macro*> macroList;
 	File() { }
 	
 public:
@@ -380,10 +374,16 @@ public:
 	{
 		return declList;
 	}
+
+	const std::vector<Macro*>& getMacroList() const
+	{
+		return macroList;
+	}
+
 	void addToList(Decl* decl) {
 		declList.push_back(decl);
 	}
-	void addToMacroList(Prep* node) {
+	void addToMacroList(Macro* node) {
 		macroList.push_back(node);
 	}
 };
