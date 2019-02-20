@@ -108,14 +108,15 @@ void dumpType(const Type* t, std::stringstream& ss)
 		break;
 
 	// TODO - custom struct type
-	// case CXType_Elaborated:
-	// {
-		// std::string name = getStructName(node->getCXType());
-		// if(name.empty())
-		// 	os << anonymousType;
-		// else os << name;
-	// 	break;
-	// }
+	case cimp_Other:
+	{
+	// 	std::string name = getStructName(node->getCXType());
+	// 	if(name.empty())
+	// 		ss << anonymousType;
+	// 	else ss << name;
+		break;
+	}
+
 	default:
 		break;
 	}
@@ -169,7 +170,8 @@ void dumpFun(Fun* f, std::stringstream& ss)
 	// Parse return type
 	std::stringstream retTypeStream;
 	dumpType(f->getRetType(), retTypeStream);
-	ss << " : " << retTypeStream.str();
+	if(!retTypeStream.str().empty())
+		ss << " : " << retTypeStream.str();
 
 	/* End of function */
 	ss << std::endl;
