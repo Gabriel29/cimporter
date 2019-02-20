@@ -114,6 +114,7 @@ void dumpType(const Type* t, std::stringstream& ss)
 
 void dumpEnum(Enum *e, std::stringstream& ss)
 {
+	anonymousType = e->getName();
 	ss << "using " << e->getName() << " = Int" << std::endl;
 	for(auto const& value: e->getEnumList())
 	{
@@ -123,6 +124,7 @@ void dumpEnum(Enum *e, std::stringstream& ss)
 
 void dumpStruct(Struct* s, std::stringstream& ss)
 {
+	anonymousType = s->getName();
 	ss << "using " << s->getName() << " = Int" << std::endl;
 	for(auto const& value: s->getFieldList())
 	{

@@ -11,5 +11,6 @@
 #define HexFFFF		0xFFFF
 
 #define MyString		"String"
+#define MyString2		"Second String"
 #define AnotherString	"Another \
 						String"
