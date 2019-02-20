@@ -85,6 +85,7 @@ private:
 	Type* child;
 	//CXType cx_type;
 	cimp_Type type;
+	std::string data;
 
 public:
 	Type(cimp_Type _type)
@@ -98,6 +99,13 @@ public:
 		type = _type;
 		child = _child;
 	}
+
+	Type(cimp_Type _type, std::string _data)
+	{
+		type = _type;
+		data = _data;
+	}
+
 	// Type(CXType _cx_type, cimp_Type _type)
 	// {
 	// 	cx_type = _cx_type;
@@ -121,6 +129,10 @@ public:
 
 	const Type* getChild() const {
 		return child;
+	}
+
+	const std::string getData() const {
+		return data;
 	}
 	// TODO - Ptr, Array
 };

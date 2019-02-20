@@ -9,6 +9,7 @@ namespace cimp
 
 std::string getCursorName(const CXCursor& cursor);
 std::string removeFileExtension(const std::string& file);
+std::string getStructName(CXType type);
 
 } /* namespace cimp */
 

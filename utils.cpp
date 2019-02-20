@@ -19,4 +19,14 @@ std::string getCursorName(const CXCursor& cursor)
 	return cursorName;
 } 
 
+std::string getStructName(CXType type)
+{
+	auto cursor = clang_getTypeDeclaration(type);
+	auto cursorSpelling = clang_getCursorSpelling (cursor);
+	std::string sprType = std::string(clang_getCString(cursorSpelling));
+	clang_disposeString(cursorSpelling);
+
+	return sprType;
+}
+
 } /* namespace cimp */

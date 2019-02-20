@@ -67,8 +67,7 @@ Type* parseType(CXType cx_type)
 		break;
 
 	case CXType_Elaborated:
-		child = parseType(clang_getArrayElementType(cx_type));
-		type = new Type(cimp_Other, child);
+		type = new Type(cimp_Other, getStructName(cx_type));
 
 	default:
 		break;

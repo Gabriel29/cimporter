@@ -9,16 +9,6 @@ namespace cimp
 
 std::string anonymousType;
 
-std::string getStructName(CXType type)
-{
-	auto cursor = clang_getTypeDeclaration(type);
-	auto cursorSpelling = clang_getCursorSpelling (cursor);
-	std::string sprType = std::string(clang_getCString(cursorSpelling));
-	clang_disposeString(cursorSpelling);
-
-	return sprType;
-}
-
 void dumpFile(File* f)
 {
 	std::stringstream ss;
@@ -107,13 +97,12 @@ void dumpType(const Type* t, std::stringstream& ss)
 		ss << ")";
 		break;
 
-	// TODO - custom struct type
 	case cimp_Other:
 	{
-	// 	std::string name = getStructName(node->getCXType());
-	// 	if(name.empty())
-	// 		ss << anonymousType;
-	// 	else ss << name;
+		std::string name = t->getData();
+		if(name.empty())
+			ss << anonymousType;
+		else ss << name;
 		break;
 	}
 
