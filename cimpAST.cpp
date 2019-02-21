@@ -295,38 +295,13 @@ CXChildVisitResult cursorVisitorDecl(CXCursor cursor, CXCursor parent, CXClientD
 	return CXChildVisit_Continue;
 }
 
-std::string getMacroType(std::string type)
-{
-	std::string sprType;
-
-	if(type == "int")
-		sprType = "Int";
-	else if(type == "long")
-		sprType = "Int";
-	else if(type == "unsigned")
-		sprType = "Int";
-	else if(type == "float")
-		sprType = "Double";
-	else if(type == "double")
-		sprType = "Double";
-	else if(type == "char")
-		sprType = "Char";
-	else sprType = type;
-
-	return sprType;
-}
-
 Macro* parseTokenList(std::vector<std::string>& tokenList, unsigned num_tokens)
 {
-	std::string name = tokenList[0];
-	std::string macro = getMacroType(tokenList[1]);
+	//std::string name = tokenList[0];
+	//std::string macro = "LUL";
+	MacroParser m(&tokenList);
 	
-	for(auto token : tokenList)
-	{
-		//std::cout << token << " OMG" << std::endl;
-	}
-
-	return new Macro(name, macro);
+	return m.parseMacro();
 }
 
 Macro* parseMacroDefiniton(CXCursor cursor, File* file)
