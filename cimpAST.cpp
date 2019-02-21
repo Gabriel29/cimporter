@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <list>
 
 #include "cimpAST.hpp"
 #include "utils.h"
@@ -315,13 +316,26 @@ std::string getMacroType(std::string type)
 	return sprType;
 }
 
+Macro* parseTokenList(std::vector<std::string>& tokenList, unsigned num_tokens)
+{
+	std::string name = tokenList[0];
+	std::string macro = getMacroType(tokenList[1]);
+	
+	for(auto token : tokenList)
+	{
+		//std::cout << token << " OMG" << std::endl;
+	}
+
+	return new Macro(name, macro);
+}
+
 Macro* parseMacroDefiniton(CXCursor cursor, File* file)
 {
 	
 	CXTranslationUnit TU = (CXTranslationUnit)file->getTranslationUnit();
 	CXSourceRange range = clang_getCursorExtent(cursor);
 
-	std::string name, macro;
+	std::vector<std::string> tokenList;
 	unsigned  num_tokens;
 	CXToken*  tokens;
 	CXCursor* cursors = 0;
@@ -333,10 +347,12 @@ Macro* parseMacroDefiniton(CXCursor cursor, File* file)
 	for (unsigned i = 0; i != num_tokens; ++i) {
 		CXString str = clang_getTokenSpelling(TU, tokens[i]);
 		
-		if(i == 0)
-			name = clang_getCString(str);
-		else if(i == 1) 
-			macro = getMacroType(clang_getCString(str));
+		tokenList.push_back(clang_getCString(str));
+
+		// if(i == 0)
+		// 	name = clang_getCString(str);
+		// else if(i == 1) 
+		// 	macro = getMacroType(clang_getCString(str));
 
 		clang_disposeString(str);
 	}
@@ -344,7 +360,9 @@ Macro* parseMacroDefiniton(CXCursor cursor, File* file)
 	free(cursors);
 	clang_disposeTokens(TU, tokens, num_tokens);
 
-	return new Macro(name, macro);
+	return parseTokenList(tokenList, num_tokens);
+
+	//return new Macro(name, macro);
 }
 
 CXChildVisitResult cursorVisitorPrep(CXCursor cursor, CXCursor parent, CXClientData clientData)

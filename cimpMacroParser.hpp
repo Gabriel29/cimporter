@@ -27,4 +27,19 @@ public:
 	//static Macro* parseMacroDefiniton(CXCursor cursor, File* file);
 };
 
+class MacroParser
+{
+private:
+	std::vector<std::string>* tokens;
+public:
+	MacroParser(std::vector<std::string>* _tokens)
+	{
+		tokens = _tokens;
+	}
+	
+	static bool isNext();
+	static bool isNext2();
+	static bool accept();
+};
+
 #endif /* __cimpMacroParser__ */
