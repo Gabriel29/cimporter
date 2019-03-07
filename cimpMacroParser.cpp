@@ -59,7 +59,6 @@ bool MacroParser::isType(MacroParser::tkType type)
 
 bool MacroParser::isNext(MacroParser::tkType type)
 {
-    std::cout << pos << " " << tokens->size() << std::endl;
     if(pos + 1 >= tokens->size())
         return false;
     
@@ -67,6 +66,22 @@ bool MacroParser::isNext(MacroParser::tkType type)
         return false;
 
     return true;
+}
+
+bool MacroParser::isNext2(MacroParser::tkType type)
+{
+    if(pos + 2 >= tokens->size())
+        return false;
+
+    if(getType(pos+2) != type)
+        return false;
+
+    return true;
+}
+
+void parseMacroCall(std::string& macro)
+{
+
 }
 
 Macro* MacroParser::parseMacro()
@@ -105,6 +120,8 @@ Macro* MacroParser::parseMacro()
     {
         name = tokens->at(pos);  pos++;
         macro = tokens->at(pos); pos++;
+
+        parseMacroCall(macro);
 
         macro = getMacroType(macro);
 

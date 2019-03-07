@@ -3,6 +3,7 @@
 
 #include "cimpAST.hpp"
 #include "dumpSparrow.hpp"
+#include "utils.h"
 
 namespace cimp
 {
@@ -11,8 +12,10 @@ std::string anonymousType;
 
 void dumpFile(File* f)
 {
+	std::string file = f->getFileName();
 	std::stringstream ss;
-	std::cout << "File: " << f->getFileName() << std::endl;
+
+	std::cout << "File: " << removeFileExtension(file) << std::endl;
 	std::cout << "------------------------" << std::endl << std::endl;
 	
 	/* Print all macros from File */
@@ -100,8 +103,10 @@ void dumpType(const Type* t, std::stringstream& ss)
 	case cimp_Other:
 	{
 		std::string name = t->getData();
-		if(name.empty())
+		
+		if(name.empty()) {
 			ss << anonymousType;
+		}
 		else ss << name;
 		break;
 	}

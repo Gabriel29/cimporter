@@ -1,13 +1,24 @@
 #include "utils.h"
+#include <iostream>
 
 namespace cimp
 {
+extern std::string lastAnonymousName;
 
-std::string removeFileExtension(const std::string& file) {
+std::string removeFileExtension(const std::string& fileCt) {
+	std::string file = fileCt;
+
+ 	// Get only file Name
+	size_t fileName = file.find_last_of("/");
+	if(fileName != std::string::npos)
+		file = file.substr(fileName + 1);
+
+	// Remove file extension
     size_t dot = file.find_last_of(".");
     if (dot == std::string::npos) 
     	return file;
-    return file.substr(0, dot); 
+    
+	return file.substr(0, dot); 
 }
 
 std::string getCursorName(const CXCursor& cursor)
@@ -21,8 +32,8 @@ std::string getCursorName(const CXCursor& cursor)
 
 std::string getStructName(CXType type)
 {
-	auto cursor = clang_getTypeDeclaration(type);
-	auto cursorSpelling = clang_getCursorSpelling (cursor);
+	CXCursor cursor = clang_getTypeDeclaration(type);
+	CXString cursorSpelling = clang_getCursorSpelling (cursor);
 	std::string sprType = std::string(clang_getCString(cursorSpelling));
 	clang_disposeString(cursorSpelling);
 

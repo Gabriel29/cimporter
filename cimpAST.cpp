@@ -67,13 +67,17 @@ Type* parseType(CXType cx_type)
 		type = new Type(cimp_Void);
 		break;
 
+	case CXType_Typedef:
 	case CXType_Elaborated:
-		type = new Type(cimp_Other, getStructName(cx_type));
+	{
+		std::string customType = getStructName(cx_type);
+		type = new Type(cimp_Other, customType);
+		break;
+	}
 
 	default:
 		break;
 	}
-
 	return type;
 }
 
@@ -122,6 +126,7 @@ Struct* parseStruct(const CXCursor& cursor)
 
 	CXType type = clang_getCursorType(cursor);
 	Struct* s = new Struct(name, type);
+
 	clang_visitChildren(cursor, cursorVisitorStruct, s);
 
 	return s;
@@ -129,9 +134,10 @@ Struct* parseStruct(const CXCursor& cursor)
 
 structField* parseStructField(CXCursor cursor)
 {
+	CXType fieldType = clang_getCursorType(cursor);
 	std::string name = getCursorName(cursor);
-	Type* type = parseType(clang_getCursorType(cursor));
 	
+	Type* type = parseType(fieldType);
 	return new structField(name, type);
 }
 

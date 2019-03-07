@@ -92,17 +92,20 @@ public:
 	{
 		type = _type;
 		child = NULL;
+		data = "nothing";
 	}
 
 	Type(cimp_Type _type, Type* _child)
 	{
 		type = _type;
 		child = _child;
+		data = "nothing";
 	}
 
 	Type(cimp_Type _type, std::string _data)
 	{
 		type = _type;
+		child = NULL;
 		data = _data;
 	}
 
