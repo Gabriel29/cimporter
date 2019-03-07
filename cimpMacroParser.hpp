@@ -9,16 +9,28 @@ class Macro
 private:
 	std::string name;
 	std::string macro;
+	bool valid;
 
 public:
 	Macro(std::string _name, std::string _macro)
 	{
 		name = _name;
 		macro = _macro;
+		valid = true;
+	}
+	Macro(std::string _name, std::string _macro, bool _valid)
+	{
+		name = _name;
+		macro = _macro;
+		valid = _valid;
 	}
 	const std::string& getName() const
 	{
 		return name;
+	}
+	const bool isValid()
+	{
+		return valid;
 	}
 	const std::string& getExpansion() const
 	{

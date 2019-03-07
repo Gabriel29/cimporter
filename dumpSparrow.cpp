@@ -21,7 +21,8 @@ void dumpFile(File* f)
 	/* Print all macros from File */
 	for(auto const& value: f->getMacroList())
 	{
-		std::cout << "using " << value->getName() << " = " << value->getExpansion() << std::endl;
+		if(value->isValid())
+			std::cout << "using " << value->getName() << " = " << value->getExpansion() << std::endl;
 	}
 
 	/* Print all declarations from File */
