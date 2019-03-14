@@ -68,6 +68,7 @@ enum cimp_Type
 	cimp_CtArray,
 	cimp_IncArray,
 	cimp_Other,
+	cimp_FunPtr,
 };
 
 enum cimp_nodeType
@@ -79,6 +80,8 @@ enum cimp_nodeType
 	funType,
 };
 
+class FunParam;
+
 class Type
 {
 private:
@@ -86,6 +89,7 @@ private:
 	//CXType cx_type;
 	cimp_Type type;
 	std::string data;
+	std::vector<FunParam*> paramList;
 
 public:
 	Type(cimp_Type _type)
@@ -109,22 +113,10 @@ public:
 		data = _data;
 	}
 
-	// Type(CXType _cx_type, cimp_Type _type)
-	// {
-	// 	cx_type = _cx_type;
-	// 	type = _type;
-	// 	child = NULL;
-	// }
-
-	// Type(CXType _cx_type, cimp_Type _type, Type* _child)
-	// {
-	// 	cx_type = _cx_type;
-	// 	type = _type;
-	// 	child = _child;
-	// }
-	// const CXType& getCXType() const {
-	// 	return cx_type;
-	// }
+	void addToList(FunParam* node)
+	{
+		paramList.push_back(node);
+	}
 
 	const cimp_Type getType() const {
 		return type;
@@ -264,6 +256,37 @@ public:
 	}
 	const Type* getType() const {
 		return type;
+	}
+};
+
+class FunPtr
+{
+
+private:
+	FunPtr() { }
+	std::string funcName;
+	Type* retType;
+	std::vector<FunParam*> paramList;
+
+public:
+	FunPtr(std::string name, Type* _retType)
+	{
+		funcName = name;
+		retType = _retType;
+	}
+	const std::string& getName() const {
+		return funcName;
+	}
+	const std::vector<FunParam*> getParamList() const {
+		return paramList;
+	}
+	const Type* getRetType() const {
+		return retType;
+	}
+
+	void addToList(FunParam* node)
+	{
+		paramList.push_back(node);
 	}
 };
 

@@ -1,5 +1,5 @@
 CC = clang++
-CFLAGS = -I /usr/lib/llvm-6.0/include/
+CFLAGS = -I /usr/lib/llvm-6.0/include/ -ggdb3 -O0
 CLIBS = -lclang
 
 dumpSparrow: cimpAST

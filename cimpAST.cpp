@@ -17,7 +17,9 @@ std::string lastAnonymousName;
 std::string currentFile;
 unsigned int currentVal;
 
-Type* parseType(CXType cx_type)
+FunParam* parseFunParam(CXCursor cursor);
+
+Type* parseType(CXType cx_type, CXCursor cursor)
 {
 	Type *type, *child;
 	
@@ -49,17 +51,18 @@ Type* parseType(CXType cx_type)
 		break;
 
 	case CXType_Pointer:
-		child = parseType(clang_getPointeeType(cx_type));
+	{
+		child = parseType(clang_getPointeeType(cx_type), cursor);
 		type = new Type(cimp_Pointer, child);
 		break;
-
+	}
 	case CXType_ConstantArray:
-		child = parseType(clang_getArrayElementType(cx_type));
+		child = parseType(clang_getArrayElementType(cx_type), cursor);
 		type = new Type(cimp_CtArray, child);
 		break;
 
 	case CXType_IncompleteArray:
-		child = parseType(clang_getArrayElementType(cx_type));
+		child = parseType(clang_getArrayElementType(cx_type), cursor);
 		type = new Type(cimp_IncArray, child);
 		break;
 
@@ -74,10 +77,43 @@ Type* parseType(CXType cx_type)
 		type = new Type(cimp_Other, customType);
 		break;
 	}
+	case CXType_Unexposed:
+	{
+		// FunPtr Type
+		CXType canonicalType = clang_getCanonicalType(cx_type);
+		type = parseType(canonicalType, cursor);	
+		break;
+	}
+
+	case CXType_FunctionProto:
+	{
+		Type* retType = parseType(clang_getResultType(cx_type), cursor);
+		std::cout << retType->getType() << std::endl;
+		type = new Type(cimp_FunPtr, retType);
+
+		clang_visitChildren(cursor,
+		[](CXCursor c, CXCursor p, CXClientData cd) {
+
+			switch(clang_getCursorKind(c)) {
+				case CXCursor_ParmDecl: {
+					Type* t = (Type*)cd;
+					FunParam *param = parseFunParam(c);
+					t->addToList(param);
+					break;
+				}
+				default: 
+					break;
+			}
+			return CXChildVisit_Continue;
+		}, type );
+
+		break;
+	}
 
 	default:
 		break;
 	}
+
 	return type;
 }
 
@@ -85,7 +121,7 @@ Typedef* parseTypedef(CXCursor cursor)
 {
 	std::string name = getCursorName(cursor);
 	CXType cx_type = clang_getTypedefDeclUnderlyingType(cursor);
-	Type *type = parseType(cx_type);
+	Type *type = parseType(cx_type, cursor);
 	Typedef *t = new Typedef(name, type);
 
 	return t;
@@ -137,7 +173,7 @@ structField* parseStructField(CXCursor cursor)
 	CXType fieldType = clang_getCursorType(cursor);
 	std::string name = getCursorName(cursor);
 	
-	Type* type = parseType(fieldType);
+	Type* type = parseType(fieldType, cursor);
 	return new structField(name, type);
 }
 
@@ -145,7 +181,7 @@ Fun* parseFun(CXCursor cursor)
 {
 	Fun* func = NULL;
 	std::string name = getCursorName(cursor);
-	Type* retType = parseType(clang_getResultType(clang_getCursorType(cursor)));
+	Type* retType = parseType(clang_getResultType(clang_getCursorType(cursor)), cursor);
 
 	/* Create function node */
 	func = new Fun(name, retType);
@@ -162,7 +198,7 @@ Fun* parseFun(CXCursor cursor)
 FunParam* parseFunParam(CXCursor cursor)
 {
 	FunParam* param = NULL;
-	param = new FunParam("nume", parseType(clang_getCursorType(cursor)));
+	param = new FunParam("nume", parseType(clang_getCursorType(cursor), cursor));
 	
 	return param;
 }

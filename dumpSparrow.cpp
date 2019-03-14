@@ -140,10 +140,18 @@ void dumpStruct(Struct* s, std::stringstream& ss)
 	}
 }
 
+void dumpFunPtr(const Type* t, std::stringstream& ss)
+{
+	ss << "ASDSADSASADSA ";
+}
+
 void dumpTypedef(Typedef *t, std::stringstream& ss)
 {
+	auto type = t->getType();
 	ss << "using " << t->getName() << " = ";
-	dumpType(t->getType(), ss);
+	if(type->getType() == cimp_FunPtr)
+		dumpFunPtr(type, ss);
+	else dumpType(type, ss);
 	ss << std::endl;
 }
 

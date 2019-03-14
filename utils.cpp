@@ -3,7 +3,6 @@
 
 namespace cimp
 {
-extern std::string lastAnonymousName;
 
 std::string removeFileExtension(const std::string& fileCt) {
 	std::string file = fileCt;
