@@ -87,6 +87,7 @@ void parseMacroCall(std::string& macro)
 Macro* MacroParser::parseMacro()
 {
     std::string name, macro;
+    bool isValid = true;
 
     do
     {
@@ -117,18 +118,18 @@ Macro* MacroParser::parseMacro()
 
     // Parse macro function
     if (isType(tkSTRING) && isNext(tkLPARAN))
-    {
+    {        
         name = tokens->at(pos);  pos++;
         macro = tokens->at(pos); pos++;
 
         parseMacroCall(macro);
 
         macro = getMacroType(macro);
-
+        isValid = false;
         break;
     }
 
     } while (0);
     
-    return new Macro(name, macro);
+    return new Macro(name, macro, isValid);
 }

@@ -85,6 +85,7 @@ void dumpType(const Type* t, std::stringstream& ss)
 
 	case cimp_Void:
 		// This type is not present in Sparrow
+		ss << "Byte";
 		break;
 
 	case cimp_CtArray:
@@ -149,9 +150,26 @@ void dumpTypedef(Typedef *t, std::stringstream& ss)
 {
 	auto type = t->getType();
 	ss << "using " << t->getName() << " = ";
-	if(type->getType() == cimp_FunPtr)
-		dumpFunPtr(type, ss);
-	else dumpType(type, ss);
+	if(t->isFunPtr() == false)
+		dumpType(type, ss);
+	else {
+		ss << "FunPtr(";
+		dumpType(type, ss);
+
+		/* Print arguments */
+		int i = 0;
+		for(auto const& value: t->getParamList())
+		{
+			if(i == 0) ss << ", ";
+			if(i > 0) ss << ", ";
+
+			dumpType(value->getType(), ss);
+			i++;
+		}
+
+		ss << ")";
+
+	}
 	ss << std::endl;
 }
 

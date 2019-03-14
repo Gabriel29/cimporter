@@ -68,7 +68,6 @@ enum cimp_Type
 	cimp_CtArray,
 	cimp_IncArray,
 	cimp_Other,
-	cimp_FunPtr,
 };
 
 enum cimp_nodeType
@@ -326,7 +325,10 @@ class Typedef
 
 private:
 	std::string name;
+	bool _isFunPtr;
 	Type *type;
+	std::vector<FunParam*> paramList;
+
 	Typedef() { }
 
 public:
@@ -334,12 +336,26 @@ public:
 	{
 		name = typeName;
 		type = _type;
+		_isFunPtr = false;
+	}
+	void setFunPtrTrue() {
+		_isFunPtr = true;
+	}
+	bool isFunPtr() {
+		return _isFunPtr;
 	}
 	const std::string& getName() const {
 		return name;
 	}
 	const Type* getType() const {
 		return type;
+	}
+	void addToList(FunParam* decl) {
+		paramList.push_back(decl);
+	}
+	const std::vector<FunParam*>& getParamList() const
+	{
+		return paramList;
 	}
 };
 

@@ -16,6 +16,7 @@ namespace cimp
 std::string lastAnonymousName;
 std::string currentFile;
 unsigned int currentVal;
+bool isFunPtr;
 
 FunParam* parseFunParam(CXCursor cursor);
 
@@ -87,26 +88,8 @@ Type* parseType(CXType cx_type, CXCursor cursor)
 
 	case CXType_FunctionProto:
 	{
-		Type* retType = parseType(clang_getResultType(cx_type), cursor);
-		std::cout << retType->getType() << std::endl;
-		type = new Type(cimp_FunPtr, retType);
-
-		clang_visitChildren(cursor,
-		[](CXCursor c, CXCursor p, CXClientData cd) {
-
-			switch(clang_getCursorKind(c)) {
-				case CXCursor_ParmDecl: {
-					Type* t = (Type*)cd;
-					FunParam *param = parseFunParam(c);
-					t->addToList(param);
-					break;
-				}
-				default: 
-					break;
-			}
-			return CXChildVisit_Continue;
-		}, type );
-
+		type = parseType(clang_getResultType(cx_type), cursor);
+		isFunPtr = true;
 		break;
 	}
 
@@ -119,10 +102,30 @@ Type* parseType(CXType cx_type, CXCursor cursor)
 
 Typedef* parseTypedef(CXCursor cursor)
 {
+	isFunPtr = false;
 	std::string name = getCursorName(cursor);
 	CXType cx_type = clang_getTypedefDeclUnderlyingType(cursor);
 	Type *type = parseType(cx_type, cursor);
+
 	Typedef *t = new Typedef(name, type);
+	if(isFunPtr == false)
+		return t;
+	
+	t->setFunPtrTrue();
+	clang_visitChildren(cursor,
+	[](CXCursor c, CXCursor p, CXClientData cd) {
+		switch(clang_getCursorKind(c)) {
+			case CXCursor_ParmDecl: {
+				Typedef* t = (Typedef*) cd;
+				FunParam *param = parseFunParam(c);
+				t->addToList(param);
+				break;
+			}
+			default: 
+				break;
+		}
+		return CXChildVisit_Continue;
+	}, t );
 
 	return t;
 }
