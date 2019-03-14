@@ -91,7 +91,7 @@ void dumpType(const Type* t, std::stringstream& ss)
 	case cimp_CtArray:
 		ss << "StaticArray(";
 		dumpType(t->getChild(), ss);
-		//ss << ", " << clang_getArraySize(t->getCXType());
+		ss << ", " << t->getData();
 		ss << ")";
 		break;
 

@@ -57,11 +57,13 @@ Type* parseType(CXType cx_type, CXCursor cursor)
 		type = new Type(cimp_Pointer, child);
 		break;
 	}
-	case CXType_ConstantArray:
+	case CXType_ConstantArray: 
+	{
 		child = parseType(clang_getArrayElementType(cx_type), cursor);
 		type = new Type(cimp_CtArray, child);
+		type->setData(std::to_string(clang_getArraySize(cx_type)));
 		break;
-
+	}
 	case CXType_IncompleteArray:
 		child = parseType(clang_getArrayElementType(cx_type), cursor);
 		type = new Type(cimp_IncArray, child);

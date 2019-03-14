@@ -128,6 +128,9 @@ public:
 	const std::string getData() const {
 		return data;
 	}
+	void setData(std::string _data) {
+		data = _data;
+	}
 	// TODO - Ptr, Array
 };
 
