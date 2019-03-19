@@ -34,6 +34,12 @@ Type* parseType(CXType cx_type, CXCursor cursor)
 		type = new Type(cimp_Int);
 		break;
 
+	case CXType_UInt:
+	case CXType_ULong:
+	case CXType_ULongLong:
+		type = new Type(cimp_ULong);
+		break;
+
 	case CXType_Long:
 	case CXType_LongLong:
 		type = new Type(cimp_Long);
@@ -57,6 +63,7 @@ Type* parseType(CXType cx_type, CXCursor cursor)
 		type = new Type(cimp_Pointer, child);
 		break;
 	}
+
 	case CXType_ConstantArray: 
 	{
 		child = parseType(clang_getArrayElementType(cx_type), cursor);
@@ -64,6 +71,7 @@ Type* parseType(CXType cx_type, CXCursor cursor)
 		type->setData(std::to_string(clang_getArraySize(cx_type)));
 		break;
 	}
+
 	case CXType_IncompleteArray:
 		child = parseType(clang_getArrayElementType(cx_type), cursor);
 		type = new Type(cimp_IncArray, child);
@@ -80,14 +88,16 @@ Type* parseType(CXType cx_type, CXCursor cursor)
 		type = new Type(cimp_Other, customType);
 		break;
 	}
+	
 	case CXType_Unexposed:
 	{
 		// FunPtr Type
 		CXType canonicalType = clang_getCanonicalType(cx_type);
-		type = parseType(canonicalType, cursor);	
+		type = parseType(canonicalType, cursor);
 		break;
 	}
 
+	case CXType_FunctionNoProto:
 	case CXType_FunctionProto:
 	{
 		type = parseType(clang_getResultType(cx_type), cursor);
@@ -210,12 +220,6 @@ FunParam* parseFunParam(CXCursor cursor)
 
 CXChildVisitResult cursorVisitorFunc(CXCursor cursor, CXCursor parent, CXClientData clientData)
 {
-	CXSourceLocation location = clang_getCursorLocation(cursor);
-	if( clang_Location_isFromMainFile( location ) == 0 )
-	{
-		return CXChildVisit_Continue;
-	}
-
 	Fun* f = reinterpret_cast<Fun*>(clientData);
 	CXCursorKind cursorKind = clang_getCursorKind(cursor);
 
@@ -276,7 +280,6 @@ CXChildVisitResult cursorVisitorDecl(CXCursor cursor, CXCursor parent, CXClientD
 	{
 	case CXCursor_TypedefDecl:
 	{
-		//obj->addObject(parseTypedef(cursor));
 		File* f = reinterpret_cast<File*>(clientData);
 		f->addToList(new Decl(parseTypedef(cursor)));
 		break;
@@ -431,8 +434,10 @@ File::File(std::string file)
 	currentFile = removeFileExtension(file);
 	currentVal = 0;
 
+	// libclang doesn't know about basic headers.. o_O
+	const char *cli_args[] = { "-I", "/usr/lib/clang/6.0.0/include" };
 	index = clang_createIndex(1, 1);
-	tu = clang_parseTranslationUnit(index, fileName.c_str(), NULL, 0, NULL,
+	tu = clang_parseTranslationUnit(index, fileName.c_str(), cli_args, 2, NULL,
                               0, CXTranslationUnit_DetailedPreprocessingRecord);
 
 	if(tu == NULL) {

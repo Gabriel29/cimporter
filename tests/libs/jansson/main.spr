@@ -1,0 +1,98 @@
+import os
+import std.ptr
+import "jansson.spr"
+
+fun printIndents(indent: Int)
+    for i = 0..indent
+        cout << "  "
+
+fun printJSON(json: Ptr(json_t), indent: Int = 0)
+    if json.type == JSON_OBJECT
+        cout << endl
+        printIndents(indent)
+        cout << "{" << endl
+        var size = json_object_size(json)
+
+        var key = json_object_iter_key(json_object_iter(json))
+        var value = json_object_iter_value(json_object_key_to_iter(key))
+        while key.isSet && value.isSet
+            printIndents(indent + 1)
+            cout << '"' << StringRef.fromCString(key.get) << '": '
+            printJSON(value, indent + 1)
+
+            key = json_object_iter_key(
+                json_object_iter_next(json, json_object_key_to_iter(key)))
+            value = json_object_iter_value(json_object_key_to_iter(key))
+
+            if key.isSet && value.isSet
+                cout << "," << endl
+
+        cout << endl
+        printIndents(indent)
+        cout << "}"
+
+    else if json->type == JSON_ARRAY
+        cout << endl
+        printIndents(indent)
+        cout << "[" << endl
+
+        var size = json_array_size(json)
+        for i = 0..size
+            var value = json_array_get(json, i)
+            printIndents(indent + 1)
+            printJSON(value, indent + 1)
+            
+            if i < size - 1
+                cout << ","
+            cout << endl
+
+        printIndents(indent)
+        cout << "]"
+
+    else if json->type == JSON_STRING
+        cout << '"' << StringRef.fromCString(json_string_value(json).get) << '"'
+    else if json->type == JSON_INTEGER
+        cout << json_integer_value(json)
+    else if json->type == JSON_REAL
+        cout << json_real_value(json)
+    else if json->type == JSON_TRUE
+        cout << "true"
+    else if json->type == JSON_FALSE
+        cout << "false"
+    else if json->type == JSON_NULL
+        cout << "null"
+
+fun sprMain
+    var jsonTrue, jsonFile: Ptr(json_t)
+    var err: Ptr(json_error_t)
+    
+    var input = CString("json_example.json")
+    //var output = CString("dump_json.out")
+
+    jsonTrue = json_true()
+    cout << mkStreamRefWrapper(jsonTrue.get) << endl << flush
+    cout << jsonTrue->type << endl
+
+    jsonFile = json_load_file(input.front, 0, err)
+    cout << jsonFile->type << endl
+    printJSON(jsonFile)
+
+    cout << endl
+
+    var output = CString("dump_json.json")
+    var jsonFileOut, array: Ptr(json_t)
+    jsonFileOut = json_object()
+    array = json_array()
+    json_array_append_new(array, json_string(CString("CImporter").front))
+    json_array_append_new(array, json_string(CString("Sparrow").front))
+
+    json_object_set_new(jsonFileOut, CString("int").front, json_integer(100))
+    json_object_set_new(jsonFileOut, CString("real").front, json_real(2.50))
+    json_object_set_new(jsonFileOut, CString("adevarat").front, json_true())
+    json_object_set_new(jsonFileOut, CString("fals").front, json_false())
+    json_object_set_new(jsonFileOut, CString("null").front, json_null())
+    json_object_set_new(jsonFileOut, CString("sir").front, json_string(CString("StringTest").front))
+    json_object_set_new(jsonFileOut, CString("tablou").front, array)
+
+    printJSON(jsonFileOut)
+    json_dump_file(jsonFileOut, output.front, 1)

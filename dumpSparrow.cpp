@@ -65,6 +65,10 @@ void dumpType(const Type* t, std::stringstream& ss)
 		ss << "Int";
 		break;
 
+	case cimp_ULong:
+		ss << "ULong";
+		break;
+
 	case cimp_Long:
 		ss << "Long";
 		break;
@@ -79,13 +83,16 @@ void dumpType(const Type* t, std::stringstream& ss)
 
 	case cimp_Pointer:
 		ss << "Ptr(";
+		if(t->getChild()->getType() == cimp_Void)
+			ss << "Byte";
+
 		dumpType(t->getChild(), ss);
 		ss << ")";
 		break;
 
 	case cimp_Void:
 		// This type is not present in Sparrow
-		ss << "Byte";
+		//ss << "Byte";
 		break;
 
 	case cimp_CtArray:
@@ -132,18 +139,13 @@ void dumpEnum(Enum *e, std::stringstream& ss)
 void dumpStruct(Struct* s, std::stringstream& ss)
 {
 	anonymousType = s->getName();
-	ss << "using " << s->getName() << " = Int" << std::endl;
+	ss << "datatype " << s->getName() << std::endl;
 	for(auto const& value: s->getFieldList())
 	{
 		ss << "    " << value->getName() << " : ";
 		dumpType(value->getType(), ss);
 		ss << std::endl;
 	}
-}
-
-void dumpFunPtr(const Type* t, std::stringstream& ss)
-{
-	ss << "ASDSADSASADSA ";
 }
 
 void dumpTypedef(Typedef *t, std::stringstream& ss)
@@ -153,7 +155,7 @@ void dumpTypedef(Typedef *t, std::stringstream& ss)
 	if(t->isFunPtr() == false)
 		dumpType(type, ss);
 	else {
-		ss << "FunPtr(";
+		ss << "FunctionPtr(";
 		dumpType(type, ss);
 
 		/* Print arguments */
@@ -175,16 +177,18 @@ void dumpTypedef(Typedef *t, std::stringstream& ss)
 
 void dumpFun(Fun* f, std::stringstream& ss)
 {
-	ss << "native[\"" << f->getName() << "\"]" << std::endl;
+	ss << "[native(\"" << f->getName() << "\")]" << std::endl;
 	ss << "fun " << f->getName();
 
 	/* Print arguments */
 	int i = 0;
 	for(auto const& value: f->getParamList())
 	{
+		std::string parVarName = "var" + std::to_string(i);
 		if(i == 0) ss << "(";
 		if(i > 0) ss << ", ";
 
+		ss << parVarName << ": ";
 		dumpType(value->getType(), ss);
 		i++;
 	}

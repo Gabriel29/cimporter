@@ -60,6 +60,7 @@ enum cimp_Type
 	cimp_Bool = 0,
 	cimp_Int, 
 	cimp_Long,
+	cimp_ULong,
 	cimp_Char,
 	cimp_Void,
 	cimp_Float,
