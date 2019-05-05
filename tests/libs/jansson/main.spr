@@ -1,5 +1,6 @@
 import os
 import std.ptr
+
 import "jansson.spr"
 
 fun printIndents(indent: Int)
@@ -17,7 +18,7 @@ fun printJSON(json: Ptr(json_t), indent: Int = 0)
         var value = json_object_iter_value(json_object_key_to_iter(key))
         while key.isSet && value.isSet
             printIndents(indent + 1)
-            cout << '"' << StringRef.fromCString(key.get) << '": '
+            cout << '"' << fromCString(key.get) << '": '
             printJSON(value, indent + 1)
 
             key = json_object_iter_key(
@@ -31,7 +32,7 @@ fun printJSON(json: Ptr(json_t), indent: Int = 0)
         printIndents(indent)
         cout << "}"
 
-    else if json->type == JSON_ARRAY
+    else if json.type == JSON_ARRAY
         cout << endl
         printIndents(indent)
         cout << "[" << endl
@@ -49,17 +50,17 @@ fun printJSON(json: Ptr(json_t), indent: Int = 0)
         printIndents(indent)
         cout << "]"
 
-    else if json->type == JSON_STRING
-        cout << '"' << StringRef.fromCString(json_string_value(json).get) << '"'
-    else if json->type == JSON_INTEGER
+    else if json.type == JSON_STRING
+        cout << '"' << fromCString(json_string_value(json).get) << '"'
+    else if json.type == JSON_INTEGER
         cout << json_integer_value(json)
-    else if json->type == JSON_REAL
+    else if json.type == JSON_REAL
         cout << json_real_value(json)
-    else if json->type == JSON_TRUE
+    else if json.type == JSON_TRUE
         cout << "true"
-    else if json->type == JSON_FALSE
+    else if json.type == JSON_FALSE
         cout << "false"
-    else if json->type == JSON_NULL
+    else if json.type == JSON_NULL
         cout << "null"
 
 fun sprMain
@@ -70,11 +71,11 @@ fun sprMain
     //var output = CString("dump_json.out")
 
     jsonTrue = json_true()
-    cout << mkStreamRefWrapper(jsonTrue.get) << endl << flush
-    cout << jsonTrue->type << endl
+    cout << mkStreamRefWrapper(jsonTrue.get) << endl //<< flush
+    cout << jsonTrue.type << endl
 
     jsonFile = json_load_file(input.front, 0, err)
-    cout << jsonFile->type << endl
+    cout << jsonFile.type << endl
     printJSON(jsonFile)
 
     cout << endl

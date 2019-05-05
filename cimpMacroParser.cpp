@@ -129,6 +129,8 @@ Macro* MacroParser::parseMacro()
         break;
     }
 
+    isValid = false;
+
     } while (0);
     
     return new Macro(name, macro, isValid);

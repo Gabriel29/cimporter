@@ -4,6 +4,18 @@
 namespace cimp
 {
 
+std::string getFilePath(const std::string& filePath)
+{
+	std::string file = "";
+
+ 	// Get file Path
+	size_t fileNamePos = filePath.find_last_of("/");
+	if(fileNamePos != std::string::npos)
+		file = file.substr(fileNamePos + 1);
+
+	return filePath.substr(0, fileNamePos);
+}
+
 std::string removeFileExtension(const std::string& fileCt) {
 	std::string file = fileCt;
 

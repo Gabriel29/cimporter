@@ -12,6 +12,7 @@ void dumpEnum(Enum *e, std::stringstream& ss);
 void dumpTypedef(Typedef* t, std::stringstream& ss);
 void dumpStruct(Struct* s, std::stringstream& ss);
 void dumpFun(Fun *f, std::stringstream& ss);
+void dumpUnion(Union *u, std::stringstream& ss);
 
 };
 

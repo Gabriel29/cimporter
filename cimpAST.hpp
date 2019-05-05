@@ -191,6 +191,37 @@ public:
 
 };
 
+class Union
+{
+private:
+	std::string unionName;
+	CXType unionType;
+	std::vector<structField*> fieldList;
+
+public:
+	Union(std::string name, CXType type)
+	{
+		unionName = name;
+		unionType = type;
+	}
+	const std::string& getName() const
+	{
+		return unionName;
+	}
+	const CXType getType() const
+	{
+		return unionType;
+	}
+	const std::vector<structField*>& getFieldList() const
+	{
+		return fieldList;
+	}
+	void addToList(structField* node)
+	{
+		fieldList.push_back(node);
+	}
+};
+
 class EnumDecl
 {
 
@@ -391,6 +422,11 @@ public:
 	{
 		node = (void*)f;
 		nodeType = funType;
+	}
+	Decl(Union *u)
+	{
+		node = (void*)u;
+		nodeType = unionType;
 	}
 
 	cimp_nodeType getNodeType() const

@@ -11,6 +11,7 @@ CXChildVisitResult cursorFuncProto(CXCursor cursor, CXCursor parent, CXClientDat
 
 std::string getCursorName(const CXCursor& cursor);
 std::string removeFileExtension(const std::string& file);
+std::string getFilePath(const std::string& filePath);
 std::string getStructName(CXType type);
 std::string getFunctionProto(CXType type);
 

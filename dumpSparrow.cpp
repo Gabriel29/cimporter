@@ -15,8 +15,8 @@ void dumpFile(File* f)
 	std::string file = f->getFileName();
 	std::stringstream ss;
 
-	std::cout << "File: " << removeFileExtension(file) << std::endl;
-	std::cout << "------------------------" << std::endl << std::endl;
+	std::cout << "import cimporter.cimp" << std::endl;
+	std::cout << std::endl;
 	
 	/* Print all macros from File */
 	for(auto const& value: f->getMacroList())
@@ -47,6 +47,9 @@ void dumpFile(File* f)
 		case funType:
 			dumpFun(reinterpret_cast<Fun*>(value->getNode()), ss);
 			break;
+		
+		case unionType:
+			dumpUnion(reinterpret_cast<Union*>(value->getNode()), ss);
 
 		default:
 			break;
@@ -134,6 +137,20 @@ void dumpEnum(Enum *e, std::stringstream& ss)
 	{
 		ss << "using " << value->getName() << " = " << value->getValue() << std::endl;
 	}
+}
+
+void dumpUnion(Union *u, std::stringstream& ss)
+{
+	bool first = true;
+	anonymousType = u->getName();
+	ss << "using " << u->getName() << " = Union(";
+	for(auto const& value: u->getFieldList())
+	{
+		if(!first) ss << ", ";
+		dumpType(value->getType(), ss);
+		first = false;
+	}
+	ss << ")" << std::endl;
 }
 
 void dumpStruct(Struct* s, std::stringstream& ss)

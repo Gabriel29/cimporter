@@ -81,6 +81,7 @@ Type* parseType(CXType cx_type, CXCursor cursor)
 		type = new Type(cimp_Void);
 		break;
 
+	case CXType_Enum:
 	case CXType_Typedef:
 	case CXType_Elaborated:
 	{
@@ -181,6 +182,24 @@ Struct* parseStruct(const CXCursor& cursor)
 	clang_visitChildren(cursor, cursorVisitorStruct, s);
 
 	return s;
+}
+
+Union* parseUnion(const CXCursor& cursor)
+{
+	std::string name = getCursorName(cursor);
+
+	if(name.empty()) {
+		lastAnonymousName = currentFile + std::to_string(currentVal);
+		name = currentFile + std::to_string(currentVal);
+		currentVal++;
+	}
+
+	CXType type = clang_getCursorType(cursor);
+	Union* u = new Union(name, type);
+
+	clang_visitChildren(cursor, cursorVisitorStruct, u);
+
+	return u;
 }
 
 structField* parseStructField(CXCursor cursor)
@@ -309,7 +328,7 @@ CXChildVisitResult cursorVisitorDecl(CXCursor cursor, CXCursor parent, CXClientD
 	case CXCursor_UnionDecl:
 	{
 		File* f = reinterpret_cast<File*>(clientData);
-		//f->addToList(new Decl(parseUnion(cursor)));
+		f->addToList(new Decl(parseUnion(cursor)));
 		break;
 	}
 
@@ -418,6 +437,12 @@ CXChildVisitResult cursorVisitorPrep(CXCursor cursor, CXCursor parent, CXClientD
 	/* Parse included files */
 	case CXCursor_InclusionDirective:
 	{
+		CXFile file = clang_getIncludedFile(cursor);
+		CXString filename = clang_getFileName(file);
+		const char *fn = clang_getCString(filename);
+		std::cout << fn << std::endl;
+		clang_disposeString(filename);
+
 		break;
 	}
 
